@@ -1,0 +1,13 @@
+{
+  "$schema": "https://wails.io/schemas/config.v2.json",
+  "name": "pg_dashboard",
+  "outputfilename": "pg_dashboard",
+  "frontend:install": "npm install",
+  "frontend:build": "npm run build",
+  "frontend:dev:watcher": "npm run dev",
+  "frontend:dev:serverUrl": "auto",
+  "author": {
+    "name": "Antoine Dupasquier",
+    "email": "dupasquierantoine@gmail.com"
+  }
+}
