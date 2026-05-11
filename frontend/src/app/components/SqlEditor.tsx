@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState } from 'preact/hooks';
 import { Play, Download, Trash2, Terminal } from 'lucide-react';
 
 interface QueryResult {

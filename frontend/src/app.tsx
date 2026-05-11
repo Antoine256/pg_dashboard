@@ -1,9 +1,6 @@
-import './App.css'
-import logo from "./assets/images/logo-universal.png"
 //import {Greet} from "../wailsjs/go/main/App";
-import {useState} from "preact/hooks";
-import {h} from 'preact';
-import { Theme, ThemePanel } from "@radix-ui/themes";
+import { Theme } from "@radix-ui/themes";
+import Dashboard from './app/Dashboard';
 
 export function App(props: any) {
 
@@ -14,9 +11,8 @@ export function App(props: any) {
     return (
         <>
             <div id="App">
-                <Theme accentColor="crimson" grayColor="sand" radius="large" scaling="95%">
-                    
-                    {/* <ThemePanel /> */}
+                <Theme accentColor="crimson" grayColor="sand" radius="large" scaling="95%" appearance="dark" panelBackground="solid">
+                    <Dashboard />
                 </Theme>
             </div>
         </>
