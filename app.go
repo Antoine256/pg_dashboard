@@ -67,11 +67,7 @@ func (a *App) ExecuteQuery(query string) ([]map[string]interface{}, error) {
 		rows.Scan(ptrs...)
 		row := make(map[string]interface{})
 		for i, col := range cols {
-			if b, ok := vals[i].([]byte); ok {
-				row[col] = string(b) // convertit []byte en string
-			} else {
-				row[col] = vals[i]
-			}
+			row[col] = vals[i]
 		}
 		results = append(results, row)
 	}

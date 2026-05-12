@@ -1,5 +1,7 @@
 import { useState } from 'preact/hooks';
 import { Play, Download, Trash2, Terminal } from 'lucide-react';
+import { ExecuteQuery } from '../../../wailsjs/go/main/App';
+import { parseQueryRes } from '../../utils/parseQueryRes';
 
 interface QueryResult {
   columns: string[];
@@ -8,36 +10,29 @@ interface QueryResult {
   executionTime: number;
 }
 
-const sampleQueries = [
-  'SELECT * FROM users LIMIT 10;',
-  'SELECT table_name FROM information_schema.tables WHERE table_schema = \'public\';',
-  'SELECT version();',
-];
-
-export function SqlEditor() {
-  const [query, setQuery] = useState('');
+export function SqlEditor({ queries, queryIndex }: { queries: string[]; queryIndex: number }) {
+  const [query, setQuery] = useState(queries[queryIndex] || '');
   const [result, setResult] = useState<QueryResult | null>(null);
   const [isExecuting, setIsExecuting] = useState(false);
 
   const executeQuery = () => {
     setIsExecuting(true);
-
-    setTimeout(() => {
-      const mockResult: QueryResult = {
-        columns: ['id', 'username', 'email', 'created_at', 'is_active'],
-        rows: [
-          [1, 'admin', 'admin@example.com', '2024-01-15 10:30:00', true],
-          [2, 'john_doe', 'john@example.com', '2024-02-20 14:22:15', true],
-          [3, 'jane_smith', 'jane@example.com', '2024-03-10 09:45:30', true],
-          [4, 'bob_wilson', 'bob@example.com', '2024-03-25 16:18:42', false],
-          [5, 'alice_brown', 'alice@example.com', '2024-04-05 11:33:27', true],
-        ],
-        rowCount: 5,
-        executionTime: 23.5,
-      };
-      setResult(mockResult);
-      setIsExecuting(false);
-    }, 500);
+    console.log("Executing query:", query);
+    ExecuteQuery(query)
+      .then((result) => {
+        var parsedResult = parseQueryRes(result, 0);
+        if (typeof parsedResult === 'string') {
+          alert("An error occurred while executing the query: " + parsedResult);
+          setIsExecuting(false);
+          return;
+        }
+        setResult(parsedResult);
+        setIsExecuting(false);
+      })
+      .catch((error) => {
+        console.error("Error executing query:", error);
+        setIsExecuting(false);
+      });
   };
 
   const clearQuery = () => {
@@ -83,14 +78,14 @@ export function SqlEditor() {
           <textarea
             value={query}
             onChange={(e) => {
-                console.log("Query changed:");
+              setQuery((e.target as HTMLInputElement).value);
             }}
             placeholder="Enter your SQL query here..."
             className="w-full h-32 p-4 bg-card text-foreground font-mono text-sm resize-none focus:outline-none"
           />
           <div className="px-4 py-2 bg-muted border-t border-border flex items-center justify-between">
             <div className="flex gap-2">
-              {sampleQueries.map((sample, i) => (
+              {queries.map((sample, i) => (
                 <button
                   key={i}
                   onClick={() => setQuery(sample)}

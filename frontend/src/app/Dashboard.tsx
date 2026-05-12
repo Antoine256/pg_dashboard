@@ -12,7 +12,7 @@ type View = 'databases' | 'users' | 'query' | 'tables';
 
 export default function Dashboard(): JSX.Element {
   const [currentView, setCurrentView] = useState<View>('tables');
-  const [isConnected, setIsConnected] = useState(true);
+  const [isConnected, setIsConnected] = useState(false);
   const [showConnectionModal, setShowConnectionModal] = useState(false);
   const [connectionInfo, setConnectionInfo] = useState<ConnectionConfig>({
     host: 'localhost',
@@ -21,6 +21,12 @@ export default function Dashboard(): JSX.Element {
     username: 'postgres',
     password: '',
   });
+  const [queries, setQueries] = useState<string[]>([
+    `SELECT * FROM information_schema.tables WHERE table_schema = 'public';`,
+    `SELECT * FROM information_schema.users;`,
+    `SELECT * FROM information_schema.columns WHERE table_schema = 'public';`
+  ]);
+  const [queryIndex, setQueryIndex] = useState<number>(0);
   const [loading, setLoading ] = useState<boolean>(false)
 
   const handleConnect = (config: ConnectionConfig) => {
@@ -181,8 +187,8 @@ export default function Dashboard(): JSX.Element {
           </div>
         ) : (
           <>
-            {currentView === 'tables' && <TableList />}
-            {currentView === 'query' && <SqlEditor />}
+            {currentView === 'tables' && <TableList handleQuery={(queries, index) => { setQueries(queries); setQueryIndex(index); setCurrentView('query'); }} />}
+            {currentView === 'query' && <SqlEditor queries={queries} queryIndex={queryIndex} />}
             {currentView === 'databases' && <DatabaseList changeDatabase={changeDatabase} />}
             {currentView === 'users' && <UsersList />}
           </>
