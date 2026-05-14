@@ -177,10 +177,10 @@ MIT
 
 ## Images du projet 
 
-![Tables](docs/screenshots/tables.png)
+![Tables](docs/screenshots/Tables.png)
 
-![Databases](docs/screenshots/databases.png)
+![Databases](docs/screenshots/Databases.png)
 
-![SQL Editor](docs/screenshots/query.png)
+![SQL Editor](docs/screenshots/Query.png)
 
-![Logs](docs/screenshots/logs.png)
+![Logs](docs/screenshots/Logs.png)
