@@ -1,6 +1,6 @@
 import { useState } from 'preact/hooks';
 import { Play, Download, Trash2, Terminal } from 'lucide-react';
-import { ExecuteQuery } from '../../../wailsjs/go/main/App';
+import { ExecuteQuery } from '../../../wailsjs/go/app/App';
 import { parseQueryRes } from '../../utils/parseQueryRes';
 
 interface QueryResult {
@@ -12,17 +12,25 @@ interface QueryResult {
 
 export function SqlEditor({ queries, queryIndex }: { queries: string[]; queryIndex: number }) {
   const [query, setQuery] = useState(queries[queryIndex] || '');
-  const [result, setResult] = useState<QueryResult | null>(null);
+  const [result, setResult] = useState<QueryResult | string | null>(null);
   const [isExecuting, setIsExecuting] = useState(false);
 
   const executeQuery = () => {
     setIsExecuting(true);
-    console.log("Executing query:", query);
     ExecuteQuery(query)
       .then((result) => {
+        if(result === null) {
+          setResult("No results returned.");
+          setIsExecuting(false);
+          return;
+        }else if(result.rows.length == 0) {
+          setResult('Query returned successfully but no data to display.');
+          setIsExecuting(false);
+          return;
+        }
         var parsedResult = parseQueryRes(result, 0);
         if (typeof parsedResult === 'string') {
-          alert("An error occurred while executing the query: " + parsedResult);
+          setResult(parsedResult);
           setIsExecuting(false);
           return;
         }
@@ -31,6 +39,7 @@ export function SqlEditor({ queries, queryIndex }: { queries: string[]; queryInd
       })
       .catch((error) => {
         console.error("Error executing query:", error);
+        setResult(error instanceof Error ? error.message : String(error));
         setIsExecuting(false);
       });
   };
@@ -42,9 +51,10 @@ export function SqlEditor({ queries, queryIndex }: { queries: string[]; queryInd
 
   const exportResults = () => {
     if (!result) return;
+    const res = result as QueryResult;
     const csv = [
-      result.columns.join(','),
-      ...result.rows.map(row => row.join(',')),
+      res.columns.join(','),
+      ...res.rows.map(row => row.join(',')),
     ].join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
@@ -110,7 +120,7 @@ export function SqlEditor({ queries, queryIndex }: { queries: string[]; queryInd
           <div className="border border-border rounded-lg overflow-hidden bg-card flex-1 flex flex-col">
             <div className="bg-muted px-4 py-2 flex items-center justify-between border-b border-border">
               <span className="text-sm text-muted-foreground">
-                Results ({result.rowCount} rows, {result.executionTime}ms)
+                {typeof result === 'string' ? 'No Informations' : `Results (${result.rowCount} rows, ${result.executionTime}ms)`}
               </span>
               <button
                 onClick={exportResults}
@@ -120,6 +130,9 @@ export function SqlEditor({ queries, queryIndex }: { queries: string[]; queryInd
                 Export CSV
               </button>
             </div>
+            {typeof result === 'string' ? (
+              <div className="p-4 text-sm text-foreground">{result}</div>
+            ) : (
             <div className="overflow-auto flex-1">
               <table className="w-full">
                 <thead className="bg-muted sticky top-0">
@@ -153,6 +166,7 @@ export function SqlEditor({ queries, queryIndex }: { queries: string[]; queryInd
                 </tbody>
               </table>
             </div>
+            )}
           </div>
         )}
       </div>

@@ -1,6 +1,6 @@
 import { Database, HardDrive } from 'lucide-react';
 import { useEffect, useState } from 'preact/compat';
-import { Connect, ExecuteQuery } from '../../../wailsjs/go/main/App';
+import { Connect, ExecuteQuery } from '../../../wailsjs/go/app/App';
 
 interface DatabaseInfo {
   name: string;
@@ -24,14 +24,14 @@ FROM pg_database;`
     ExecuteQuery(query)
       .then((result) => {
         console.log("Received database list:", result);
-        if(result === null || typeof result === 'string') {
+        if(result === null || typeof result.rows === 'string') {
           console.error("No database found or error in query execution. Result:", result);
           alert("No databases found or an error occurred while fetching the database list. Please check your connection and try again.");
           setMockDatabases([]);
           setLoading(false)
           return;
         }
-        setMockDatabases(result as DatabaseInfo[]);
+        setMockDatabases(result.rows as DatabaseInfo[]);
       })
       .catch((error) => {
         console.error("Error fetching databases:", error);1

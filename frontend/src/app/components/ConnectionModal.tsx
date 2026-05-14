@@ -1,12 +1,13 @@
-import { useState } from 'preact/hooks';
+import { useEffect, useState } from 'preact/hooks';
 import { X } from 'lucide-react';
-import { Connect} from "../../../wailsjs/go/main/App";
+import { Connect} from "../../../wailsjs/go/app/App";
 
 
 interface ConnectionModalProps {
   isOpen: boolean;
   onClose: () => void;
   onConnect: (config: ConnectionConfig) => void;
+  initialConfig?: ConnectionConfig;
 }
 
 export interface ConnectionConfig {
@@ -17,17 +18,27 @@ export interface ConnectionConfig {
   password: string;
 }
 
-export function ConnectionModal({ isOpen, onClose, onConnect }: ConnectionModalProps) {
+export function ConnectionModal({ isOpen, onClose, onConnect, initialConfig }: ConnectionModalProps) {
   const [config, setConfig] = useState<ConnectionConfig>({
-    host: 'localhost',
-    port: '5432',
-    database: 'postgres',
-    username: 'postgres',
-    password: '',
+    host: initialConfig?.host || 'localhost',
+    port: initialConfig?.port || '5432',
+    database: initialConfig?.database || 'postgres',
+    username: initialConfig?.username || 'postgres',
+    password: initialConfig?.password || '',
   });
   const [Loading, setLoading] = useState(false)
 
   if (!isOpen) return null;
+
+  useEffect(() => {
+    setConfig({
+      host: initialConfig?.host || 'localhost',
+      port: initialConfig?.port || '5432',
+      database: initialConfig?.database || 'postgres',
+      username: initialConfig?.username || 'postgres',
+      password: initialConfig?.password || '',
+    });
+  }, [initialConfig]);
 
   const handleSubmit = async (e: { preventDefault: () => void }) => {
     e.preventDefault();
@@ -49,7 +60,7 @@ export function ConnectionModal({ isOpen, onClose, onConnect }: ConnectionModalP
       <div className="bg-card backdrop-blur-lg border border-border rounded-lg w-full max-w-md p-6">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-foreground">Connect to PostgreSQL</h2>
-          <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground cursor-pointer">
             <X className="w-5 h-5" />
           </button>
         </div>

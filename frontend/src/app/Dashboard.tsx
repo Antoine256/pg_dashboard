@@ -1,14 +1,17 @@
-import { useState } from 'preact/hooks';
-import { Database, Users, Terminal, Plus, Power, Table } from 'lucide-react';
+import { useEffect, useState } from 'preact/hooks';
+import { Database, Users, Terminal, Plus, Power, Table, Sheet, ScrollText } from 'lucide-react';
 import { ConnectionModal, ConnectionConfig } from './components/ConnectionModal';
 import { DatabaseList } from './components/DatabaseList';
 import { UsersList } from './components/UsersList';
 import { SqlEditor } from './components/SqlEditor';
 import { JSX } from 'preact';
 import { TableList } from './components/TableList';
-import { Connect } from '../../wailsjs/go/main/App';
+import { Connect, LoadConfig, SaveConfig } from '../../wailsjs/go/app/App';
+import { Logs } from './components/Logs';
 
-type View = 'databases' | 'users' | 'query' | 'tables';
+type View = 'databases' | 'users' | 'query' | 'tables' | 'logs';
+
+const btnStyle = "w-full flex items-center gap-3 px-3 py-2 rounded mb-1 cursor-pointer hover:outline-blue-900 hover:outline box-border"
 
 export default function Dashboard(): JSX.Element {
   const [currentView, setCurrentView] = useState<View>('tables');
@@ -29,8 +32,33 @@ export default function Dashboard(): JSX.Element {
   const [queryIndex, setQueryIndex] = useState<number>(0);
   const [loading, setLoading ] = useState<boolean>(false)
 
+  useEffect(() => {
+      // Check if we have a previous connection in config file
+      LoadConfig().then(config => {
+        console.log("Loaded config:", config);
+        let oldConfig = {
+          host: config.lastHost || 'localhost',
+          port: config.lastPort || '5432',
+          database: config.lastDatabase || 'postgres',
+          username: config.lastUser || 'postgres',
+          password: '',
+        };
+        console.log("Setting connection info from config:", oldConfig);
+        setConnectionInfo(oldConfig);
+      });
+  }, []);
+
   const handleConnect = (config: ConnectionConfig) => {
     setConnectionInfo(config);
+    LoadConfig().then(oldConfig => {
+      SaveConfig({
+        lastHost: config.host,
+        lastPort: config.port,
+        lastUser: config.username,
+        lastDatabase: config.database,
+        lastLogFileAnalyzed: oldConfig.lastLogFileAnalyzed || '',
+      });
+    });
     setIsConnected(true);
   };
 
@@ -113,9 +141,9 @@ export default function Dashboard(): JSX.Element {
           <div className="flex-1 p-2 border-b border-sidebar-border">
             <button
               onClick={() => setCurrentView('tables')}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded mb-1 ${
+              className={` ${btnStyle} ${
                 currentView === 'tables'
-                  ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                  ? 'bg-sidebar-accent text-sidebar-accent-foreground border-blue-500 border'
                   : 'text-sidebar-foreground hover:bg-sidebar-accent/50'
               }`}
             >
@@ -124,9 +152,9 @@ export default function Dashboard(): JSX.Element {
             </button>
             <button
               onClick={() => setCurrentView('query')}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded mb-1 ${
+              className={` ${btnStyle} ${
                 currentView === 'query'
-                  ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                  ? 'bg-sidebar-accent text-sidebar-accent-foreground border-blue-500 border'
                   : 'text-sidebar-foreground hover:bg-sidebar-accent/50'
               }`}
             >
@@ -137,9 +165,9 @@ export default function Dashboard(): JSX.Element {
           <div className="flex-1 p-2">
             <button
               onClick={() => setCurrentView('databases')}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded mb-1 ${
+              className={` ${btnStyle} ${
                 currentView === 'databases'
-                  ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                  ? 'bg-sidebar-accent text-sidebar-accent-foreground border-blue-500 border'
                   : 'text-sidebar-foreground hover:bg-sidebar-accent/50'
               }`}
             >
@@ -149,14 +177,25 @@ export default function Dashboard(): JSX.Element {
 
             <button
               onClick={() => setCurrentView('users')}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded mb-1 ${
+              className={` ${btnStyle} ${
                 currentView === 'users'
-                  ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                  ? 'bg-sidebar-accent text-sidebar-accent-foreground border-blue-500 border'
                   : 'text-sidebar-foreground hover:bg-sidebar-accent/50'
               }`}
             >
               <Users className="w-5 h-5" />
-              Users
+              Users (soon)
+            </button>
+            <button
+              onClick={() => setCurrentView('logs')}
+              className={` ${btnStyle} ${
+                currentView === 'logs'
+                  ? 'bg-sidebar-accent text-sidebar-accent-foreground border-blue-500 border'
+                  : 'text-sidebar-foreground hover:bg-sidebar-accent/50'
+              }`}
+            >
+              <ScrollText className="w-5 h-5" />
+              Logs
             </button>
           </div>
         </nav>
@@ -191,6 +230,7 @@ export default function Dashboard(): JSX.Element {
             {currentView === 'query' && <SqlEditor queries={queries} queryIndex={queryIndex} />}
             {currentView === 'databases' && <DatabaseList changeDatabase={changeDatabase} />}
             {currentView === 'users' && <UsersList />}
+            {currentView === 'logs' && <Logs />}
           </>
         )}
       </div>
@@ -199,6 +239,7 @@ export default function Dashboard(): JSX.Element {
         isOpen={showConnectionModal}
         onClose={() => setShowConnectionModal(false)}
         onConnect={handleConnect}
+        initialConfig={connectionInfo}
       />
     </div>
   );

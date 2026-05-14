@@ -1,17 +1,20 @@
-package main
+package app
 
 import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
 
 	_ "github.com/lib/pq"
+	"golang.org/x/crypto/ssh"
 )
 
 // App struct
 type App struct {
-	ctx context.Context
-	db  *sql.DB
+	ctx       context.Context
+	db        *sql.DB
+	sshClient *ssh.Client
 }
 
 // NewApp creates a new App application struct
@@ -19,9 +22,9 @@ func NewApp() *App {
 	return &App{}
 }
 
-// startup is called when the app starts. The context is saved
+// Startup is called when the app starts. The context is saved
 // so we can call the runtime methods
-func (a *App) startup(ctx context.Context) {
+func (a *App) Startup(ctx context.Context) {
 	a.ctx = ctx
 }
 
@@ -48,12 +51,23 @@ func (a *App) Disconnect() {
 	}
 }
 
-func (a *App) ExecuteQuery(query string) ([]map[string]interface{}, error) {
+type QueryResult struct {
+	Rows    []map[string]interface{} `json:"rows"`
+	Columns []string                 `json:"columns"`
+	Elapsed float64                  `json:"elapsed"`
+}
+
+func (a *App) ExecuteQuery(query string) (QueryResult, error) {
+
+	startTime := time.Now()
+
 	rows, err := a.db.Query(query)
 	if err != nil {
-		return nil, err
+		return QueryResult{}, err
 	}
 	defer rows.Close()
+
+	elapsed := time.Since(startTime).Seconds()
 
 	cols, _ := rows.Columns()
 	var results []map[string]interface{}
@@ -67,9 +81,26 @@ func (a *App) ExecuteQuery(query string) ([]map[string]interface{}, error) {
 		rows.Scan(ptrs...)
 		row := make(map[string]interface{})
 		for i, col := range cols {
-			row[col] = vals[i]
+			if b, ok := vals[i].([]byte); ok {
+				row[col] = string(b) // convertit []byte en string
+			} else {
+				row[col] = vals[i]
+			}
 		}
 		results = append(results, row)
 	}
-	return results, nil
+
+	fmt.Printf("Query results: \n"+"%v\n", results)
+	if (len(results) == 0) && rows.Err() == nil {
+		return QueryResult{
+			Rows:    []map[string]interface{}{},
+			Columns: []string{},
+			Elapsed: elapsed,
+		}, nil
+	}
+	return QueryResult{
+		Rows:    results,
+		Columns: cols,
+		Elapsed: elapsed,
+	}, nil
 }

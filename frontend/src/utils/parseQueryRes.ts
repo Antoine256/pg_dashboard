@@ -1,9 +1,9 @@
-export function parseQueryRes(res: Record<string, any>[], executionTime: number): { columns: string[], rows: string[][], rowCount: number, executionTime: number } | string {
+export function parseQueryRes(res: { rows: Record<string, any>[], columns: string[], elapsed: number }, executionTime: number): { columns: string[], rows: string[][], rowCount: number, executionTime: number } | string {
     try {
-        if (res.length === 0) return { columns: [], rows: [], rowCount: 0, executionTime: executionTime };
+        if (res.rows.length === 0) return { columns: [], rows: [], rowCount: 0, executionTime: executionTime };
 
-        const columns = Object.keys(res[0]);
-        const rows = res.map(row => columns.map(col => {
+        const columns = res.columns;
+        const rows = res.rows.map(row => columns.map(col => {
             const val = row[col];
             if (val === null || val === undefined) return 'NULL';
             return String(val);

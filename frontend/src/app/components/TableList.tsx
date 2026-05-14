@@ -1,6 +1,6 @@
 import { HardDrive, Table } from "lucide-react";
 import { useEffect, useState } from "preact/compat";
-import { ExecuteQuery } from "../../../wailsjs/go/main/App";
+import { ExecuteQuery } from "../../../wailsjs/go/app/App";
 
 interface TableInfo {
     tablename: string;
@@ -24,7 +24,7 @@ export function TableList({handleQuery}: {handleQuery: (queries: string[], query
                     setLoading(false)
                     return;
                 }
-                setMockTables(result as TableInfo[]);
+                setMockTables(result.rows as TableInfo[]);
             })
             .catch((error) => {
                 console.error("Error fetching tables:", error);
@@ -42,12 +42,13 @@ export function TableList({handleQuery}: {handleQuery: (queries: string[], query
         // and select the good query based on action
         ExecuteQuery(`SELECT column_name FROM information_schema.columns WHERE table_name = '${tableName}';`)
         .then((result) => {
-            if(result === null || typeof result === 'string') {
-                console.error("No columns found or error in query execution. Result:", result);
+            var rows = result.rows
+            if(rows === null || typeof rows === 'string') {
+                console.error("No columns found or error in query execution. Result:", rows);
                 alert("No columns found or an error occurred while fetching the column list for table " + tableName + ". Please check your connection and try again.");
                 return;
             }
-            const columns = (result as { column_name: string }[]).map(col => col.column_name);
+            const columns = (rows as { column_name: string }[]).map(col => col.column_name);
             if(columns.length === 0) {
                 alert("No columns found for table " + tableName + ". Cannot perform " + action + " action.");
                 return;
@@ -75,7 +76,7 @@ export function TableList({handleQuery}: {handleQuery: (queries: string[], query
 
     if (mockTables.length === 0) {
         return (<div className="p-6 pt-20 text-center">
-          <p className="text-foreground">No databases found.</p>
+          <p className="text-foreground">No tables found.</p>
         </div>);
       }
 
