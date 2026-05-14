@@ -174,3 +174,13 @@ wails generate module
 ## License
 
 MIT
+
+## Images du projet 
+
+![Tables](docs/screenshots/tables.png)
+
+![Databases](docs/screenshots/databases.png)
+
+![SQL Editor](docs/screenshots/query.png)
+
+![Logs](docs/screenshots/logs.png)
